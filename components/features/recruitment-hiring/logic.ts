@@ -1,0 +1,61 @@
+// Pure helpers for the Recruitment & Hiring feature.
+
+import type { Applicant, ApplicantFormData } from "./types";
+import {
+  POSITIONS,
+  AVATAR_STYLES,
+  initGovIds,
+  initRequirements,
+  initEmploymentDocs,
+  initHealthDocs,
+} from "./constants";
+
+/**
+ * Map raw applicant DTOs from the API into the client Applicant model,
+ * newest first (applicant IDs are sequential).
+ */
+export function mapApplicants(data: any[]): Applicant[] {
+  return data
+    .map((a: any, idx: number): Applicant => ({
+      id: a.applicant_Id?.toString() || idx.toString(),
+      firstName: a.first_Name || a.firstName || "",
+      middleName: a.middle_Name || a.middleName || "",
+      lastName: a.last_Name || a.lastName || "",
+      position: a.position || POSITIONS[0],
+      status: a.status || "Training",
+      stage: a.hiring_Stage || "Initial Interview",
+      source: a.source || "Walk-In",
+      govIds: initGovIds(),
+      requirements: initRequirements(),
+      employmentDocs: initEmploymentDocs(),
+      healthDocs: initHealthDocs(),
+      email: a.email || "",
+      phone: a.phone || "",
+      avatarIndex: idx % AVATAR_STYLES.length,
+      appliedDate: a.application_Date || new Date().toISOString().split("T")[0],
+      interviewDate: a.interview_Date || "",
+      expectedStart: "",
+      aiMatchScore: a.ai_Match_Score ?? a.aiMatchScore ?? undefined,
+    }))
+    .sort((x, y) => Number(y.id) - Number(x.id));
+}
+
+/**
+ * Build the create-applicant DTO from the modal form data.
+ */
+export function buildApplicantDto(form: ApplicantFormData) {
+  return {
+    firstName: form.firstName,
+    lastName: form.lastName,
+    email: form.email,
+    phone: form.phone,
+    position: form.position,
+    source: form.source,
+    hiringStage: form.stage || "Initial Interview",
+    interviewDate: form.interviewDate || form.appliedDate,
+    expectedStart: (form as any).expectedStart || form.appliedDate,
+    resume_URL: form.resumeFileName || "",
+    contact_Details: form.middleName || "",
+    status: "Training",
+  };
+}
